@@ -1,0 +1,21 @@
+{
+  "name": "typescript-webpack-threejs-template",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "webpack-dev-server",
+    "start:open": "webpack-dev-server --open",
+    "start:network": "webpack-dev-server --host 0.0.0.0",
+    "build": "webpack --mode=production"
+  },
+  "dependencies": {
+    "three": "^0.116.1"
+  },
+  "devDependencies": {
+    "ts-loader": "^6.2.1",
+    "tslint": "^6.1.0",
+    "typescript": "^3.8.3",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3",
+    "webpack": "^4.42.0"
+  }
+}
