@@ -19,6 +19,7 @@ export class InstanceRoller extends InstancedMesh {
             const matrix = new Matrix4();
             matrix.setPosition(position);
             this.setMatrixAt(i, matrix);
+            // console.log('update');
         }
         update(position);
         this.index++;

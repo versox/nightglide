@@ -1,4 +1,5 @@
 import { Chunk } from "./chunk";
+import { getGenerator } from "./featureGeneratorService";
 
 /*
     - Hold n chunks and roll them
@@ -17,14 +18,20 @@ export class ChunkRoller {
 
     init() {
         // Generate first time
+        let prev: Chunk = null;
         for (let i = 0; i < this.numChunks; i++) {
-            const c = new Chunk();
+            const c = new Chunk(getGenerator(this.scene));
             c.init();
             this.seed = c.generate(this.seed);
             // TODO: move to position
-
+            if(prev) {
+                c.place(prev);
+            } else {
+                c.position.setZ(Chunk.chunkDepth);
+            }
             this.scene.add(c);
             this.chunks.push(c);
+            prev = c;
         }
     }
 
@@ -35,10 +42,11 @@ export class ChunkRoller {
         for (let i = 0; i < this.chunkIndex; i++) {
             this.chunks[i].advance(amount);
         }
-        if(this.chunks[this.chunkIndex].position.z > 2 * Chunk.chunkSize) {
+        if(this.chunks[this.chunkIndex].position.z > 2 * Chunk.chunkDepth) {
             this.seed = this.chunks[this.chunkIndex].generate(this.seed);
             // TODO: move to position
-
+            const prev = this.chunkIndex == 0 ? this.chunks[9] : this.chunks[this.chunkIndex - 1];
+            this.chunks[this.chunkIndex].place(prev);
             this.chunkIndex++;
             if (this.chunkIndex > 9) { this.chunkIndex = 0 }
         } else {

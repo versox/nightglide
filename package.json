@@ -8,6 +8,7 @@
     "build": "webpack --mode=production"
   },
   "dependencies": {
+    "game-keyboard": "^0.1.0",
     "three": "^0.116.1"
   },
   "devDependencies": {

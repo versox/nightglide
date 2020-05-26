@@ -1,9 +1,10 @@
 import { Scene, PerspectiveCamera, WebGLRenderer, Vector3, Colors, Color, AmbientLight, AxesHelper, HemisphereLight, DirectionalLight, GridHelper } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { App } from './app/app';
-import { WorldRoller } from './world/worldRoller';
 import { Assets } from './util/assets';
+import { ChunkRoller } from './world/chunkRoller';
+import { GliderPlayer } from './player/gliderPlayer';
+
 
 export class Game {
     private readonly scene = new Scene();
@@ -14,11 +15,13 @@ export class Game {
         alpha: true
     });
     
-    private worldRoller;
+    private chunkRoller: ChunkRoller;
+    private player: GliderPlayer;
+    private pressedKeys = {};
 
     async init() {
         // Camera
-        this.camera.position.set(0, 2.45, 15);
+        this.camera.position.set(0, 4, 15);
         this.camera.lookAt(new Vector3(0, 10, 0));
         this.camera.up = new Vector3(0, 1, 1);
 
@@ -35,8 +38,9 @@ export class Game {
         // this.renderer.setClearColor(new Color('rgb(255,255,255)'));
 
         const controls = new OrbitControls(this.camera, this.renderer.domElement);
-        const axes = new AxesHelper(5);
-        // this.scene.add(axes);
+        const axes = new AxesHelper(15);
+        axes.translateY(10);
+        this.scene.add(axes);
 
         const grid = new GridHelper(100, 10);
         grid.translateZ(5);
@@ -68,8 +72,17 @@ export class Game {
         // )
 
         // World
-        this.worldRoller = new WorldRoller(this.scene);
-        this.worldRoller.init();
+        this.chunkRoller = new ChunkRoller(this.scene, 'Seed', 10);
+        this.chunkRoller.init();
+
+        // Player
+        this.player = new GliderPlayer();
+        this.player.init();
+        this.player.position.set(0, 2, 7);
+        this.scene.add(this.player);
+        
+        window.onkeydown = (e) => { this.pressedKeys[e.keyCode] = true; }
+        window.onkeyup = (e) => { this.pressedKeys[e.keyCode] = false; }
 
         this.update();
     }
@@ -85,7 +98,22 @@ export class Game {
         this.renderer.render(this.scene, this.camera);
         requestAnimationFrame(() => this.update());
         // console.log(this.camera.position);
-        this.worldRoller.advance();
+        this.chunkRoller.advance(0.07);
+        // console.log(this.scene);
+        this.player.update();
+        if(this.pressedKeys[65]) {
+            this.player.moveLeft();
+        }
+        if(this.pressedKeys[68]) {
+            this.player.moveRight();
+        }
+        if(this.pressedKeys[83]) {
+            this.player.moveUp();
+        }
+        if(this.pressedKeys[87]) {
+            this.player.moveDown();
+        }
+        // console.log(this.pressedKeys);
     }
 }
 

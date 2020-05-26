@@ -1,4 +1,6 @@
-import { Color } from "three";
+import { Color, Scene } from "three";
+import { InstanceRoller } from "./instanceRoller";
+import { Assets } from "../util/assets";
 
 enum RIVER {
     START,
@@ -35,19 +37,22 @@ interface Features {
     riverType: RIVER,
     groundType: GROUND,
     hillsType: HILLS,
-    entities?: {}
+    entities?: InstanceRoller
 }
 
 class FeatureGenerator {
-    constructor() {
+    private treeAsset;
 
+    constructor(scene: Scene) {
+        this.treeAsset = Assets.getAsset('Tree');
     }
 
     getFeatures(): Features {
         return {
             riverType: RIVER.PIECE,
             groundType: GROUND.GREEN_ROLLING,
-            hillsType: HILLS.NORMAL
+            hillsType: HILLS.NORMAL,
+            entities: new InstanceRoller(this.treeAsset.geometry, this.treeAsset.material, 500)
         }
     }
 }
@@ -58,9 +63,9 @@ export type FeatureGeneratorT = {
 
 let generator = null;
 
-export function getGenerator(): FeatureGeneratorT {
+export function getGenerator(scene: Scene): FeatureGeneratorT {
     if(!generator) {
-        generator = new FeatureGenerator();
+        generator = new FeatureGenerator(scene);
     }
     return generator;
 }
