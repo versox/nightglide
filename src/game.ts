@@ -28,7 +28,7 @@ export class Game {
         // Light
         const ambientLight = new AmbientLight( 0x404040, 1 );
         // this.scene.add(ambientLight);
-        const directionalLight = new DirectionalLight(0xffffff, 0.75);
+        const directionalLight = new DirectionalLight(0xffffff, 0.3);
         directionalLight.position.set(0, 1, 1);
         this.scene.add(directionalLight);
         // console.log(directionalLight.position);
@@ -72,7 +72,7 @@ export class Game {
         // )
 
         // World
-        this.chunkRoller = new ChunkRoller(this.scene, 'Seed', 10);
+        this.chunkRoller = new ChunkRoller(this.scene, (9301 + 49297) % 233280, 10);
         this.chunkRoller.init();
 
         // Player
@@ -95,10 +95,15 @@ export class Game {
                 - generate ahead
                 - no longer need behind
         */
+        this.renderer.autoClear = true;
+        this.camera.layers.set(0);
+        this.renderer.render(this.scene, this.camera);
+        this.renderer.autoClear = false;
+        this.camera.layers.set(1);
         this.renderer.render(this.scene, this.camera);
         requestAnimationFrame(() => this.update());
         // console.log(this.camera.position);
-        this.chunkRoller.advance(0.07);
+        this.chunkRoller.advance(0.09);
         // console.log(this.scene);
         this.player.update();
         if(this.pressedKeys[65]) {

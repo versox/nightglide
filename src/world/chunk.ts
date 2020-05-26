@@ -101,14 +101,20 @@ export class Chunk extends Object3D {
         const features = this.featuresGenerator.getFeatures();
         this.instanceRoller.geometry = features.asset.geometry;
         this.instanceRoller.material = features.asset.material;
+        let rand = random(seed);
 
         let buffIndex = 0;
         for (let z = Chunk.chunkDepth / 2; z >= -Chunk.chunkDepth / 2; z -= this.vertexSpacing) {
+            // Mountain angle: 3.5 and 5
+            let mountainAngle = rand.random(3.5, 5);
+            // mountain grass noise: an offset of sorts
+            let mgn = Math.round(rand.random(-1, 1));
+
+            console.log(mountainAngle);
             // Mountain Left
-            for (let x = -Chunk.chunkWidth / 2; x <= -Chunk.chunkWidth / 6; x += this.vertexSpacing) {
-                
+            for (let x = -Chunk.chunkWidth / 2; x <= -Chunk.chunkWidth / 6 + (mgn - 1) * this.vertexSpacing; x += this.vertexSpacing) {
                 this.positionArr[buffIndex] = x;
-                this.positionArr[buffIndex + 1] = features.hillsType.getY(x, Chunk.chunkWidth / 6, 4 );
+                this.positionArr[buffIndex + 1] = features.hillsType.getY(x, Chunk.chunkWidth / 6, mountainAngle );
                 this.positionArr[buffIndex + 2] = z;
                 this.colorArr[buffIndex] = features.hillsType.color.r;
                 this.colorArr[buffIndex + 1] = features.hillsType.color.g;
@@ -116,26 +122,36 @@ export class Chunk extends Object3D {
                 buffIndex += 3;
             }
 
+            // ground noise
+            let groundRandom = random(rand.seed);
+
             // Grass / River
-            for (let x = -Chunk.chunkWidth / 6 + this.vertexSpacing; x <= Chunk.chunkWidth / 6; x += this.vertexSpacing) {
+            for (let x = -Chunk.chunkWidth / 6 + mgn * this.vertexSpacing; x <= Chunk.chunkWidth / 6 + (mgn - 1) * this.vertexSpacing; x += this.vertexSpacing) {
+                let groundNoise = groundRandom.random(-0.05, 0.05);
+
                 this.positionArr[buffIndex] = x;
-                this.positionArr[buffIndex + 1] = features.groundType.getY(x, 4, 0);
+                this.positionArr[buffIndex + 1] = features.groundType.getY(x, 5, groundNoise);
                 this.positionArr[buffIndex + 2] = z;
                 this.colorArr[buffIndex] = features.groundType.color.r;
                 this.colorArr[buffIndex + 1] = features.groundType.color.g;
                 this.colorArr[buffIndex + 2] = features.groundType.color.b;
 
-                this.instanceRoller.placeNext(new Vector3(x, features.groundType.getY(x, 4, 0), z));
+                if(-0.05 <= groundNoise && groundNoise <= 0.05) { 
+                    this.instanceRoller.placeNext(
+                        new Vector3(x, features.groundType.getY(x, 5, groundNoise), z),
+                        groundRandom.random(0.25, 1.25));
+                }
                 // console.log(features.groundType.color);
                 buffIndex += 3;
+                groundRandom = random(groundRandom.nextSeed);
             }
             // rand = random(rand.nextSeed, -0.05, 0.05);
             // let y = x * x / width / width + rand.random;
 
             // Mountain Right
-            for (let x = Chunk.chunkWidth / 6 + this.vertexSpacing; x <= Chunk.chunkWidth / 2; x+= this.vertexSpacing) {
+            for (let x = Chunk.chunkWidth / 6 + mgn * this.vertexSpacing; x <= Chunk.chunkWidth / 2; x+= this.vertexSpacing) {
                 this.positionArr[buffIndex] = x;
-                this.positionArr[buffIndex + 1] = features.hillsType.getY(x, Chunk.chunkWidth / 6, 4);
+                this.positionArr[buffIndex + 1] = features.hillsType.getY(x, Chunk.chunkWidth / 6, mountainAngle);
                 this.positionArr[buffIndex + 2] = z;
                 // console.log(features.hillsType.color.r);
                 // this.colorArr[buffIndex] = features.hillsType.color.r;
@@ -149,6 +165,7 @@ export class Chunk extends Object3D {
                 // console.log(buffIndex);
                 buffIndex += 3;
             }
+            if(z != -Chunk.chunkDepth / 2) { rand = random(rand.nextSeed); }
         }
 
         // Calculate normals
@@ -229,6 +246,7 @@ export class Chunk extends Object3D {
         this.geometry.attributes.color = new Float32BufferAttribute(this.colorArr, 3);
         this.geometry.computeVertexNormals();
         // console.log(this.geometry);
+        return rand.seed;
     }
 
     advance(amount: number) {

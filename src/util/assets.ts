@@ -20,10 +20,10 @@ export const Assets = {
     },
     getAsset(assetName) {
         const asset = this[assetName];
-        console.log(assetName);
-        console.log(asset);
+        // console.log(assetName);
+        // console.log(asset);
         if (!asset) {
-            throw "Asset not loaded!";
+            throw `Asset not loaded! ${assetName}`;
         }
         return asset;
     }

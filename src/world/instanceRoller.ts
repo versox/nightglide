@@ -13,11 +13,12 @@ export class InstanceRoller extends InstancedMesh {
         super(geometry, material, count);
     }
 
-    placeNext(position: Vector3): UpdateInstance {
+    placeNext(position: Vector3, scale: number): UpdateInstance {
         const i = this.index;
         const update = (position) => {
             const matrix = new Matrix4();
             matrix.setPosition(position);
+            matrix.scale(new Vector3(scale, scale, scale));
             this.setMatrixAt(i, matrix);
             // console.log('update');
         }

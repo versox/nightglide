@@ -1,4 +1,4 @@
-import { Mesh, Vector3 } from "three";
+import { Mesh, Vector3, AmbientLight, DirectionalLight, PointLight } from "three";
 import { Assets } from "../util/assets";
 
 export class GliderPlayer extends Mesh {
@@ -14,6 +14,16 @@ export class GliderPlayer extends Mesh {
         const asset = Assets.getAsset('Player');
         this.geometry = asset.geometry;
         this.material = asset.material;
+
+        this.layers.set(1);
+
+        var light = new PointLight( 0xff0000, 1, 5 );
+        this.add(light);
+
+        const playerLight = new DirectionalLight(0xffffff, 0.9);
+        playerLight.position.set(0, 5, 1);
+        playerLight.layers.set(1);
+        this.add(playerLight);
     }
 
     moveLeft() {
