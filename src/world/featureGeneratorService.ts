@@ -37,22 +37,16 @@ interface Features {
     riverType: RIVER,
     groundType: GROUND,
     hillsType: HILLS,
-    entities?: InstanceRoller
+    asset?: any
 }
 
 class FeatureGenerator {
-    private treeAsset;
-
-    constructor(scene: Scene) {
-        this.treeAsset = Assets.getAsset('Tree');
-    }
-
     getFeatures(): Features {
         return {
             riverType: RIVER.PIECE,
             groundType: GROUND.GREEN_ROLLING,
             hillsType: HILLS.NORMAL,
-            entities: new InstanceRoller(this.treeAsset.geometry, this.treeAsset.material, 500)
+            asset: Assets.getAsset('Tree')
         }
     }
 }
@@ -63,9 +57,9 @@ export type FeatureGeneratorT = {
 
 let generator = null;
 
-export function getGenerator(scene: Scene): FeatureGeneratorT {
+export function getGenerator(): FeatureGeneratorT {
     if(!generator) {
-        generator = new FeatureGenerator(scene);
+        generator = new FeatureGenerator();
     }
     return generator;
 }

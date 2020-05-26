@@ -2,6 +2,8 @@ import { Object3D, BufferGeometry, Mesh, Float32BufferAttribute, Color, MeshLamb
 import { random } from "../util/random";
 import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper';
 import { getGenerator, FeatureGeneratorT } from "./featureGeneratorService";
+import { InstanceRoller } from "./instanceRoller";
+import { Assets } from "../util/assets";
 
 /* Chunk:
     - generate
@@ -26,13 +28,24 @@ export class Chunk extends Object3D {
 
     private geometry: BufferGeometry;
 
+    private featuresGenerator: FeatureGeneratorT;
+    private instanceRoller: InstanceRoller;
 
-    constructor(private featuresGenerator: FeatureGeneratorT) {
+
+    constructor(private scene) {
         super();
     }
 
     // Setup buffers / material etc
     init() {
+        // Initialize roller
+        const treeAsset = Assets.getAsset('Tree');
+        this.instanceRoller = new InstanceRoller(treeAsset.geometry, treeAsset.material, 400);
+        this.add(this.instanceRoller);
+
+        // Features
+        this.featuresGenerator = getGenerator();
+
         const indices = [];
         for (let zi = 0; zi < this.depthCount - 1; zi++) {
             for (let xi = 0; xi < this.widthCount - 1; xi++) {
@@ -86,13 +99,16 @@ export class Chunk extends Object3D {
 
     generate(seed: number) {
         const features = this.featuresGenerator.getFeatures();
+        this.instanceRoller.geometry = features.asset.geometry;
+        this.instanceRoller.material = features.asset.material;
+
         let buffIndex = 0;
         for (let z = Chunk.chunkDepth / 2; z >= -Chunk.chunkDepth / 2; z -= this.vertexSpacing) {
             // Mountain Left
-            for (let x = -Chunk.chunkWidth / 2; x <= -Chunk.chunkWidth / 3; x += this.vertexSpacing) {
+            for (let x = -Chunk.chunkWidth / 2; x <= -Chunk.chunkWidth / 6; x += this.vertexSpacing) {
                 
                 this.positionArr[buffIndex] = x;
-                this.positionArr[buffIndex + 1] = features.hillsType.getY(x, Chunk.chunkWidth / 6, 5 );
+                this.positionArr[buffIndex + 1] = features.hillsType.getY(x, Chunk.chunkWidth / 6, 4 );
                 this.positionArr[buffIndex + 2] = z;
                 this.colorArr[buffIndex] = features.hillsType.color.r;
                 this.colorArr[buffIndex + 1] = features.hillsType.color.g;
@@ -101,7 +117,7 @@ export class Chunk extends Object3D {
             }
 
             // Grass / River
-            for (let x = -Chunk.chunkWidth / 3 + this.vertexSpacing; x <= Chunk.chunkWidth / 3; x += this.vertexSpacing) {
+            for (let x = -Chunk.chunkWidth / 6 + this.vertexSpacing; x <= Chunk.chunkWidth / 6; x += this.vertexSpacing) {
                 this.positionArr[buffIndex] = x;
                 this.positionArr[buffIndex + 1] = features.groundType.getY(x, 4, 0);
                 this.positionArr[buffIndex + 2] = z;
@@ -109,17 +125,15 @@ export class Chunk extends Object3D {
                 this.colorArr[buffIndex + 1] = features.groundType.color.g;
                 this.colorArr[buffIndex + 2] = features.groundType.color.b;
 
-                features.entities.placeNext(new Vector3(x, features.groundType.getY(x, 4, 0), z));
+                this.instanceRoller.placeNext(new Vector3(x, features.groundType.getY(x, 4, 0), z));
                 // console.log(features.groundType.color);
                 buffIndex += 3;
             }
             // rand = random(rand.nextSeed, -0.05, 0.05);
             // let y = x * x / width / width + rand.random;
 
-            this.add(features.entities);
-
             // Mountain Right
-            for (let x = Chunk.chunkWidth / 3 + this.vertexSpacing; x <= Chunk.chunkWidth / 2; x+= this.vertexSpacing) {
+            for (let x = Chunk.chunkWidth / 6 + this.vertexSpacing; x <= Chunk.chunkWidth / 2; x+= this.vertexSpacing) {
                 this.positionArr[buffIndex] = x;
                 this.positionArr[buffIndex + 1] = features.hillsType.getY(x, Chunk.chunkWidth / 6, 4);
                 this.positionArr[buffIndex + 2] = z;

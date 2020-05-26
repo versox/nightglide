@@ -20,7 +20,7 @@ export class ChunkRoller {
         // Generate first time
         let prev: Chunk = null;
         for (let i = 0; i < this.numChunks; i++) {
-            const c = new Chunk(getGenerator(this.scene));
+            const c = new Chunk(this.scene);
             c.init();
             this.seed = c.generate(this.seed);
             // TODO: move to position
