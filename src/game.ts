@@ -1,5 +1,4 @@
-import { Scene, PerspectiveCamera, WebGLRenderer, Vector3, Colors, Color, AmbientLight, AxesHelper, HemisphereLight, DirectionalLight, GridHelper } from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { Scene, PerspectiveCamera, WebGLRenderer, Vector3, AxesHelper, DirectionalLight, GridHelper, Fog, TextureLoader, Sprite, SpriteMaterial } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Assets } from './util/assets';
 import { ChunkRoller } from './world/chunkRoller';
@@ -7,118 +6,161 @@ import { GliderPlayer } from './player/gliderPlayer';
 
 
 export class Game {
-    private readonly scene = new Scene();
-    private readonly camera = new PerspectiveCamera(85, innerWidth / innerHeight, 0.1, 85);
-    private readonly renderer = new WebGLRenderer({
-        antialias: true,
-        canvas: document.getElementById('c') as HTMLCanvasElement,
-        alpha: true
-    });
-    
-    private chunkRoller: ChunkRoller;
-    private player: GliderPlayer;
+    private readonly CAMERA_GAME_FAR = 110;
+
     private pressedKeys = {};
 
+    private renderer: WebGLRenderer;
+    private camera: PerspectiveCamera; 
+    
+    private scene: Scene; 
+    private titleSprite: Sprite;
+    private chunkRoller: ChunkRoller;
+    private player: GliderPlayer;
+
+
     async init() {
+        // Menu buttons
+        global['buttons'] = {
+            play: () => {
+                this.startGame();
+            }
+        }
+
+        // Keyboard
+        window.onkeydown = (e) => { this.pressedKeys[e.keyCode] = true; }
+        window.onkeyup = (e) => { this.pressedKeys[e.keyCode] = false; }        
+
+        window.addEventListener('resize', () => this.onWindowResize(), false);
+
+        // Renderer
+        this.renderer = new WebGLRenderer({
+            antialias: true,
+            canvas: document.getElementById('c') as HTMLCanvasElement,
+            alpha: true
+        });
+        this.renderer.setSize(innerWidth, innerHeight);
+
         // Camera
-        this.camera.position.set(0, 4, 15);
-        this.camera.lookAt(new Vector3(0, 10, 0));
-        this.camera.up = new Vector3(0, 1, 1);
+        this.camera = new PerspectiveCamera(85, innerWidth / innerHeight, 0.1, 11);
+        this.camera.position.set(0, 5, 15);
+        this.camera.lookAt(new Vector3(0, 3, 0));
+        // this.camera.up = new Vector3(0, 1, 1.5);
+
+        // Scene
+        this.scene = new Scene();
+        const assetPromise =  Assets.loadAssets('assets/meshes.gltf');
 
         // Light
-        const ambientLight = new AmbientLight( 0x404040, 1 );
-        // this.scene.add(ambientLight);
         const directionalLight = new DirectionalLight(0xffffff, 0.3);
         directionalLight.position.set(0, 1, 1);
         this.scene.add(directionalLight);
-        // console.log(directionalLight.position);
+        this.scene.fog = new Fog(0x000000, 30, 120);
 
-        // Renderer
-        this.renderer.setSize(innerWidth, innerHeight);
-        // this.renderer.setClearColor(new Color('rgb(255,255,255)'));
-
-        const controls = new OrbitControls(this.camera, this.renderer.domElement);
-        const axes = new AxesHelper(15);
-        axes.translateY(10);
-        this.scene.add(axes);
-
-        const grid = new GridHelper(100, 10);
-        grid.translateZ(5);
-        grid.translateX(5);
-        // this.scene.add(grid);
-
-        await Assets.loadAssets('glider.gltf');
-        // GLTF
-        // const loader = new GLTFLoader();
-        // loader.load(
-        //     'glider.gltf',
-        //     // Loaded
-        //     (gltf) => {
-        //         const glider = gltf.scene.getObjectByName('Glider');
-        //         // console.log(gltf.scene);
-        //         this.scene.add(glider);
-        //         // console.log(glider);
-
-        //         this.scene.add(gltf.scene.getObjectByName('Player'));
-        //     },
-        //     // Loading
-        //     (progress) => {
-
-        //     },
-        //     // Error
-        //     () => {
-
-        //     }
-        // )
+        // Menu
+        const textureLoader = new TextureLoader();
+        this.titleSprite = new Sprite(
+            new SpriteMaterial({
+                map: await new Promise((res, rej) => {
+                    textureLoader.load('assets/logo.png', res)
+                })
+            }
+        ));
+        this.titleSprite.scale.set(10, 5, 1);
+        this.titleSprite.position.set(0, 7, 5);
+        this.scene.add(this.titleSprite);
 
         // World
-        this.chunkRoller = new ChunkRoller(this.scene, (9301 + 49297) % 233280, 10);
+        await assetPromise;
+        this.chunkRoller = new ChunkRoller(this.scene, (9301 + 49297) % 233280, 12);
         this.chunkRoller.init();
 
         // Player
         this.player = new GliderPlayer();
         this.player.init();
-        this.player.position.set(0, 2, 7);
+        this.player.position.set(0, 4, 12);
         this.scene.add(this.player);
-        
-        window.onkeydown = (e) => { this.pressedKeys[e.keyCode] = true; }
-        window.onkeyup = (e) => { this.pressedKeys[e.keyCode] = false; }
 
-        this.update();
+        document.getElementById('play').style.visibility = "visible";
+
+        // const oc = new OrbitControls(this.camera, document.getElementById('c'));
+
+        this.static();
     }
 
+    onWindowResize() {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(innerWidth, innerHeight);
+        this.render();
+    }
+
+    startGame() {
+        document.getElementById('play').style.visibility = "hidden";
+        this.scene.remove(this.titleSprite);
+        this.player.position.set(0, 3, 8);
+        // this.camera.lookAt(this.player.position);
+        this.progressAnim();
+    }
+
+    progressAnim() {
+        if (this.camera.far <= this.CAMERA_GAME_FAR) {
+            this.camera.far += 2;
+            this.camera.updateProjectionMatrix();
+        } else {
+            window.requestAnimationFrame(() => this.update());
+            return;
+        }
+        this.render();
+        window.requestAnimationFrame(() => this.progressAnim());
+    }
+
+    static() {
+        this.render();
+    }
+
+    
+
     update() {
-        /*
-            - move player
-            - update objects?
-            - advance world (10 chunks)
-                - generate ahead
-                - no longer need behind
-        */
-        this.renderer.autoClear = true;
+        // Check pressed keys
+        if(this.pressedKeys[65]) { // a
+            this.player.moveLeft();
+        }
+        if(this.pressedKeys[68]) { // d
+            this.player.moveRight();
+        }
+        if(this.pressedKeys[83]) { // s
+            this.player.moveUp();
+        }
+        if(this.pressedKeys[87]) { // w
+            this.player.moveDown();
+        }
+        if(this.pressedKeys[16]) {
+            // console.log(this.advanceAmount);
+        } else {
+            // if (this.advanceAmount > 0.09) { this.advanceAmount -= 0.005; }
+        }
+
+        // Update player, camera, and world
+        this.player.update();
+        this.camera.lookAt(
+            this.player.position.x,
+            this.player.position.y - 1,
+            this.player.position.z);
+        this.camera.position.set(this.player.position.x, this.player.position.y + 2, this.camera.position.z);
+        this.chunkRoller.advance(0.11);
+
+        this.render();        
+        requestAnimationFrame(() => this.update());
+    }
+
+    render() {
         this.camera.layers.set(0);
         this.renderer.render(this.scene, this.camera);
         this.renderer.autoClear = false;
         this.camera.layers.set(1);
         this.renderer.render(this.scene, this.camera);
-        requestAnimationFrame(() => this.update());
-        // console.log(this.camera.position);
-        this.chunkRoller.advance(0.09);
-        // console.log(this.scene);
-        this.player.update();
-        if(this.pressedKeys[65]) {
-            this.player.moveLeft();
-        }
-        if(this.pressedKeys[68]) {
-            this.player.moveRight();
-        }
-        if(this.pressedKeys[83]) {
-            this.player.moveUp();
-        }
-        if(this.pressedKeys[87]) {
-            this.player.moveDown();
-        }
-        // console.log(this.pressedKeys);
+        this.renderer.autoClear = true;
     }
 }
 

@@ -12,6 +12,7 @@ export const Assets = {
                 source,
                 (gltf) => {
                     gltf.scene.children.forEach((asset) => {
+                        // console.log(asset);
                         this[asset.name] = asset;
                     });
                     res();

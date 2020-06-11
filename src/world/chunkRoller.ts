@@ -13,7 +13,7 @@ export class ChunkRoller {
     constructor(
         private readonly scene,
         private seed,
-        private numChunks = 10
+        private numChunks
     ) {}
 
     init() {
@@ -36,7 +36,7 @@ export class ChunkRoller {
     }
 
     advance(amount: number) {
-        for (let i = this.chunkIndex + 1; i < 10; i++) {
+        for (let i = this.chunkIndex + 1; i < this.numChunks; i++) {
             this.chunks[i].advance(amount);
         }
         for (let i = 0; i < this.chunkIndex; i++) {
@@ -45,10 +45,10 @@ export class ChunkRoller {
         if(this.chunks[this.chunkIndex].position.z > 2 * Chunk.chunkDepth) {
             this.seed = this.chunks[this.chunkIndex].generate(this.seed);
             // TODO: move to position
-            const prev = this.chunkIndex == 0 ? this.chunks[9] : this.chunks[this.chunkIndex - 1];
+            const prev = this.chunkIndex == 0 ? this.chunks[this.numChunks - 1] : this.chunks[this.chunkIndex - 1];
             this.chunks[this.chunkIndex].place(prev);
             this.chunkIndex++;
-            if (this.chunkIndex > 9) { this.chunkIndex = 0 }
+            if (this.chunkIndex >= this.numChunks) { this.chunkIndex = 0 }
         } else {
             this.chunks[this.chunkIndex].advance(amount);
         }

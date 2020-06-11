@@ -23,11 +23,47 @@
       background: url(assets/sky.png) no-repeat center center;
       background-size: cover;
     }
+
+    #play {
+      visibility: hidden;
+      z-index: 5;
+      position: absolute;
+      top: 40%;
+      width: 100%;
+      text-align: center;
+      color: white;
+      display: flex;
+      height: 10%;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    button {
+      width: max-content;
+      margin: auto;
+      background: none;
+      border: none;
+      font-size: larger;
+      color: white
+    }
+
+    button:hover {
+      cursor: pointer;
+      color: yellow;
+    }
+
+    p {
+      font-size: smaller;
+    }
   </style>
 </head>
 
 <body>
   <canvas id="c"></canvas>
+  <div id="play">
+    <button onclick="buttons.play()">PLAY</button>
+    <p>(Use WASD to control the glider)</p>
+  </div>
   <script src="dist/bundle.js"></script>
 </body>
 

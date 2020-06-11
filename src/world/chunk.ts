@@ -1,4 +1,4 @@
-import { Object3D, BufferGeometry, Mesh, Float32BufferAttribute, Color, MeshLambertMaterial, MeshBasicMaterial, Uint8BufferAttribute, Geometry, VertexColors, Vector3 } from "three";
+import { Object3D, BufferGeometry, Mesh, Float32BufferAttribute, Color, MeshLambertMaterial, MeshBasicMaterial, Uint8BufferAttribute, Geometry, VertexColors, Vector3, MeshNormalMaterial, MeshPhongMaterial } from "three";
 import { random } from "../util/random";
 import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper';
 import { getGenerator, FeatureGeneratorT } from "./featureGeneratorService";
@@ -30,6 +30,7 @@ export class Chunk extends Object3D {
 
     private featuresGenerator: FeatureGeneratorT;
     private instanceRoller: InstanceRoller;
+    private ring: Mesh;
 
 
     constructor(private scene) {
@@ -38,6 +39,20 @@ export class Chunk extends Object3D {
 
     // Setup buffers / material etc
     init() {
+
+        const ringAsset = Assets.getAsset('Ring');
+        const material = new MeshPhongMaterial({
+            color: 0x481666,
+            transparent: true,
+            opacity: 0.5,
+            shininess: 100,
+            emissive: 0x481666
+        });
+        this.ring = new Mesh(ringAsset.geometry, material );
+        this.ring.layers.set(1);
+        this.ring.visible = false;
+        this.add(this.ring);
+
         // Initialize roller
         const treeAsset = Assets.getAsset('Tree');
         this.instanceRoller = new InstanceRoller(treeAsset.geometry, treeAsset.material, 400);
@@ -103,6 +118,14 @@ export class Chunk extends Object3D {
         this.instanceRoller.material = features.asset.material;
         let rand = random(seed);
 
+        // Ring
+        if(features.ring) {
+            this.ring.visible = true;
+            this.ring.position.set(features.ring.x, features.ring.y, features.ring.z);
+        } else {
+            this.ring.visible = false;
+        }
+
         let buffIndex = 0;
         for (let z = Chunk.chunkDepth / 2; z >= -Chunk.chunkDepth / 2; z -= this.vertexSpacing) {
             // Mountain angle: 3.5 and 5
@@ -110,7 +133,7 @@ export class Chunk extends Object3D {
             // mountain grass noise: an offset of sorts
             let mgn = Math.round(rand.random(-1, 1));
 
-            console.log(mountainAngle);
+            // console.log(mountainAngle);
             // Mountain Left
             for (let x = -Chunk.chunkWidth / 2; x <= -Chunk.chunkWidth / 6 + (mgn - 1) * this.vertexSpacing; x += this.vertexSpacing) {
                 this.positionArr[buffIndex] = x;
