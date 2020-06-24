@@ -1,6 +1,6 @@
 import './style.scss';
 
-import { Scene, PerspectiveCamera, WebGLRenderer, Vector3, AxesHelper, DirectionalLight, GridHelper, Fog, TextureLoader, Sprite, SpriteMaterial } from 'three';
+import { Scene, PerspectiveCamera, WebGLRenderer, Vector3, AxesHelper, DirectionalLight, GridHelper, Fog, TextureLoader, Sprite, SpriteMaterial, AmbientLight } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Assets } from './util/assets';
 import { ChunkRoller } from './world/chunkRoller';
@@ -45,6 +45,7 @@ export class Game {
             canvas: document.getElementById('c') as HTMLCanvasElement,
             alpha: true
         });
+        this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize(innerWidth, innerHeight);
 
         // Camera

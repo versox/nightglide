@@ -1,4 +1,4 @@
-import { Object3D, BufferGeometry, Mesh, Float32BufferAttribute, Color, MeshLambertMaterial, MeshBasicMaterial, Uint8BufferAttribute, Geometry, VertexColors, Vector3, MeshNormalMaterial, MeshPhongMaterial } from "three";
+import { Object3D, BufferGeometry, Mesh, Float32BufferAttribute, Color, MeshLambertMaterial, MeshBasicMaterial, Uint8BufferAttribute, Geometry, VertexColors, Vector3, MeshNormalMaterial, MeshPhongMaterial, LOD, BoxGeometry, BoxHelper, Uint16BufferAttribute } from "three";
 import { random } from "../util/random";
 import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper';
 import { getGenerator, FeatureGeneratorT } from "./featureGeneratorService";
@@ -60,16 +60,40 @@ export class Chunk extends Object3D {
         this.ring.visible = false;
         this.add(this.ring);
 
+        // Level of detail for trees
+        const lod = new LOD();
+
         // Initialize roller
         const treeAsset = Assets.getAsset('Tree');
-        this.instanceRoller = new InstanceRoller(treeAsset.geometry, treeAsset.material, 400);
-        this.add(this.instanceRoller);
+        const simpleTree = Assets.getAsset('SimpleTree');
+        const simplerTree = Assets.getAsset('SimplerTree');
+        this.instanceRoller = new InstanceRoller(treeAsset.geometry, simpleTree.material, 400);
+
+        let instanceRollerSimple: any = Object.create(this.instanceRoller);
+        instanceRollerSimple.geometry = simpleTree.geometry;
+        let instanceRollerSimpler: any = Object.create(this.instanceRoller);
+        instanceRollerSimpler.geometry = simplerTree.geometry;
+
+        lod.addLevel(this.instanceRoller);
+        lod.addLevel(instanceRollerSimple, 40);
+        lod.addLevel(instanceRollerSimpler, 65);   
+        this.add(lod);
 
         // Features
         this.featuresGenerator = getGenerator();
 
         const indices = [];
+        const simpleIndices = [
+            0, 19, 61,
+            19, 80, 61
+        ];
         for (let zi = 0; zi < this.depthCount - 1; zi++) {
+            const a = zi * this.widthCount;
+            const b = (zi + 1) * this.widthCount;
+            // simpleIndices.push(
+            //     a, a+59, b,
+            //     a+59, b+59, b
+            // );
             for (let xi = 0; xi < this.widthCount - 1; xi++) {
                 const a = zi * this.widthCount + xi;
                 const b = (zi + 1) * this.widthCount + xi;
@@ -79,16 +103,6 @@ export class Chunk extends Object3D {
                 );
             }
         }
-        // for (let zi = 0; zi < 1; zi++) {
-        //     for (let xi = 0; xi < this.widthCount - 1; xi++) {
-        //         const a = zi * this.widthCount + xi;
-        //         const b = (zi + 1) * this.widthCount + xi;
-        //         indices.push(
-        //             a, a+1, b,
-        //             a+1, b+1, b
-        //         );
-        //     }
-        // }
 
 
         this.positionArr = new Float32Array(this.depthCount * this.widthCount * 3);
@@ -116,7 +130,18 @@ export class Chunk extends Object3D {
         const mesh = new Mesh(geometry, new MeshLambertMaterial({
             vertexColors: true
         }));
-        this.add(mesh);
+
+        const groundLod = new LOD();
+        const simpleGroundGeo = Object.create(geometry);
+        simpleGroundGeo.index = new Uint16BufferAttribute(simpleIndices, 1);
+        const simpleGround = Object.create(mesh);
+        simpleGround.geometry = simpleGroundGeo;
+
+        // groundLod.addLevel(mesh);
+        groundLod.addLevel(simpleGround);
+
+
+        this.add(groundLod);
     }
 
     generate(seed: number) {
@@ -168,6 +193,9 @@ export class Chunk extends Object3D {
                 buffIndex += 3;
             }
 
+            console.log('mountain left end');
+            console.log(buffIndex);
+
             // ground noise
             let groundRandom = random(rand.seed);
 
@@ -194,6 +222,9 @@ export class Chunk extends Object3D {
             // rand = random(rand.nextSeed, -0.05, 0.05);
             // let y = x * x / width / width + rand.random;
 
+            console.log('ground end');
+            console.log(buffIndex);
+
             // Mountain Right
             for (let x = Chunk.chunkWidth / 6 + mgn * this.vertexSpacing; x <= Chunk.chunkWidth / 2; x+= this.vertexSpacing) {
                 this.positionArr[buffIndex] = x;
@@ -211,6 +242,10 @@ export class Chunk extends Object3D {
                 // console.log(buffIndex);
                 buffIndex += 3;
             }
+
+            console.log('RIGHT end');
+            console.log(buffIndex);
+
             if(z != -Chunk.chunkDepth / 2) { rand = random(rand.nextSeed); }
         }
 
