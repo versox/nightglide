@@ -18,6 +18,14 @@ export class Chunk extends Object3D {
     private readonly depthCount = Chunk.chunkDepth / this.vertexSpacing + 1;
     private readonly widthCount = Chunk.chunkWidth / this.vertexSpacing + 1;
 
+    // Bounding functions
+    // ground: Index by Z, and calculate Y based on X
+    public groundBounds = [];
+
+    // returns null if not important, or the ring if player is in line
+    public atRing: (z: number) => Mesh | void;
+    private hitRing = false;
+
     // private positionAttr: Float32BufferAttribute;
     // private normalAttr: Float32BufferAttribute;
     // private colorAttr: Uint8BufferAttribute;
@@ -39,7 +47,6 @@ export class Chunk extends Object3D {
 
     // Setup buffers / material etc
     init() {
-
         const ringAsset = Assets.getAsset('Ring');
         const material = new MeshPhongMaterial({
             color: 0x481666,
@@ -122,8 +129,16 @@ export class Chunk extends Object3D {
         if(features.ring) {
             this.ring.visible = true;
             this.ring.position.set(features.ring.x, features.ring.y, features.ring.z);
+            this.atRing = (z) => {
+                if (Math.abs(z - features.ring.z) <= 0.2) {
+                    this.hitRing = true;
+                    return this.ring;
+                }
+                return null;
+            };
         } else {
             this.ring.visible = false;
+            this.atRing = (z) => null;
         }
 
         let buffIndex = 0;
@@ -132,6 +147,14 @@ export class Chunk extends Object3D {
             let mountainAngle = rand.random(3.5, 5);
             // mountain grass noise: an offset of sorts
             let mgn = Math.round(rand.random(-1, 1));
+
+            this.groundBounds[z] = (x) => {
+                if (x <= -Chunk.chunkWidth / 6 + (mgn - 1) * this.vertexSpacing
+                    || x >= Chunk.chunkWidth / 6 + mgn * this.vertexSpacing) {
+                    return features.hillsType.getY(x, Chunk.chunkWidth / 6, mountainAngle);
+                }
+                return features.groundType.getY(x, 5, 1);
+            }
 
             // console.log(mountainAngle);
             // Mountain Left

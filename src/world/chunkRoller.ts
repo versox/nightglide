@@ -8,13 +8,32 @@ import { getGenerator } from "./featureGeneratorService";
 */
 export class ChunkRoller {
     private readonly chunks: Chunk[] = [];
-    private  chunkIndex = 0;
+    private chunkIndex = 0;
+
+    public boundChunk: Chunk;
+    public boundOffset: number;
 
     constructor(
         private readonly scene,
         private seed,
         private numChunks
     ) {}
+
+    reset() {
+        this.chunkIndex = 0;
+
+        let prev: Chunk = null;
+        for (let i = 0; i < this.numChunks; i++) {
+            const c = this.chunks[i];
+            this.seed = c.generate(this.seed);
+            if(prev) {
+                c.place(prev);
+            } else {
+                c.position.setZ(Chunk.chunkDepth);
+            }
+            prev = c;
+        }
+    }
 
     init() {
         // Generate first time
@@ -23,7 +42,6 @@ export class ChunkRoller {
             const c = new Chunk(this.scene);
             c.init();
             this.seed = c.generate(this.seed);
-            // TODO: move to position
             if(prev) {
                 c.place(prev);
             } else {
@@ -36,6 +54,15 @@ export class ChunkRoller {
     }
 
     advance(amount: number) {
+        // Active chunk for bound checking
+        let activeBound = (this.chunkIndex);
+        if (this.chunks[activeBound].position.z > Chunk.chunkDepth + 3) {
+            activeBound = (activeBound + 1) % 12;
+        }
+        this.boundChunk = this.chunks[activeBound];
+        this.boundOffset = 8 - this.boundChunk.position.z;
+
+
         for (let i = this.chunkIndex + 1; i < this.numChunks; i++) {
             this.chunks[i].advance(amount);
         }
@@ -44,7 +71,6 @@ export class ChunkRoller {
         }
         if(this.chunks[this.chunkIndex].position.z > 2 * Chunk.chunkDepth) {
             this.seed = this.chunks[this.chunkIndex].generate(this.seed);
-            // TODO: move to position
             const prev = this.chunkIndex == 0 ? this.chunks[this.numChunks - 1] : this.chunks[this.chunkIndex - 1];
             this.chunks[this.chunkIndex].place(prev);
             this.chunkIndex++;

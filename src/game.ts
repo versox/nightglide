@@ -1,8 +1,11 @@
+import './style.scss';
+
 import { Scene, PerspectiveCamera, WebGLRenderer, Vector3, AxesHelper, DirectionalLight, GridHelper, Fog, TextureLoader, Sprite, SpriteMaterial } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Assets } from './util/assets';
 import { ChunkRoller } from './world/chunkRoller';
 import { GliderPlayer } from './player/gliderPlayer';
+import { getGenerator } from './world/featureGeneratorService';
 
 
 export class Game {
@@ -24,6 +27,9 @@ export class Game {
         global['buttons'] = {
             play: () => {
                 this.startGame();
+            },
+            playAgain: () => {
+                this.startAgain();
             }
         }
 
@@ -103,6 +109,15 @@ export class Game {
         this.progressAnim();
     }
 
+    startAgain() {
+        document.getElementById('gameOver').style.visibility = 'hidden';
+        getGenerator().reset();
+        this.chunkRoller.reset();
+        this.player.position.set(0, 3, 8);
+        this.player.reset();
+        this.progressAnim();
+    }
+
     progressAnim() {
         if (this.camera.far <= this.CAMERA_GAME_FAR) {
             this.camera.far += 2;
@@ -119,6 +134,10 @@ export class Game {
         this.render();
     }
 
+    gameOver() {
+        document.getElementById('gameOver').style.visibility = 'visible';
+        this.render();
+    }
     
 
     update() {
@@ -148,10 +167,15 @@ export class Game {
             this.player.position.y - 1,
             this.player.position.z);
         this.camera.position.set(this.player.position.x, this.player.position.y + 2, this.camera.position.z);
-        this.chunkRoller.advance(0.11);
+        this.chunkRoller.advance(this.player.advanceSpeed);
 
-        this.render();        
-        requestAnimationFrame(() => this.update());
+        // Check bounds
+        if (this.player.checkCollision(this.chunkRoller.boundChunk, this.chunkRoller.boundOffset)) {
+            requestAnimationFrame(() => this.gameOver());
+        } else {
+            this.render();        
+            requestAnimationFrame(() => this.update());
+        };
     }
 
     render() {

@@ -53,6 +53,10 @@ class FeatureGenerator {
         asset: Assets.getAsset('Tree')
     };
 
+    reset() {
+        this.count = 0;
+    }
+
     getFeatures(): Features {
         let features: Features;
         
@@ -77,6 +81,7 @@ class FeatureGenerator {
 }
 
 export type FeatureGeneratorT = {
+    reset: () => void,
     getFeatures: () => Features
 }
 

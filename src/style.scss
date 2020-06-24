@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    overflow: hidden;
+    color: white;
+  }
+
+canvas {
+    position: absolute;
+      height: 100%;
+      width: 100%;
+      background: url(../assets/sky.png) no-repeat center center;
+      background-size: cover;
+}
+
+.screen {
+    visibility: hidden;
+    z-index: 5;
+    position: absolute;
+    top: 40%;
+    width: 100%;
+    text-align: center;
+    color: white;
+    display: flex;
+    height: 10%;
+    flex-direction: column;
+    justify-content: space-between;
+
+    button {
+        width: max-content;
+        margin: auto;
+        background: none;
+        border: none;
+        font-size: larger;
+        color: white
+      }
+  
+      button:hover {
+        cursor: pointer;
+        color: yellow;
+      }
+  
+      p {
+        font-size: smaller;
+      }
+}
+
+.statBox {
+  position: absolute;
+  top: 1rem;
+  margin: 1rem;
+  // border: 1px solid grey;
+  // border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-family: 'Roboto', sans-serif;
+  // background-color: #6A6A6A;
+
+  h1 {
+    // padding: 0.1rem 1rem 0rem;
+    // background-color: #424040;
+    font-size: 24px;
+  }
+
+  div {
+    font-size: 64px;
+  }
+
+  &--score {
+    right: 8vw;
+  }
+
+  &--lives {
+    left: 8vw;
+    align-items: flex-start;
+
+    img {
+      visibility: hidden;
+      width: 3rem;
+    }
+  }
+}
