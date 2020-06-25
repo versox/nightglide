@@ -4,6 +4,7 @@ import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHel
 import { getGenerator, FeatureGeneratorT } from "./featureGeneratorService";
 import { InstanceRoller } from "./instanceRoller";
 import { Assets } from "../util/assets";
+import { TypeMesh } from "../util/TypeMesh";
 
 /* Chunk:
     - generate
@@ -22,10 +23,6 @@ export class Chunk extends Object3D {
     // ground: Index by Z, and calculate Y based on X
     public groundBounds = [];
 
-    // returns null if not important, or the ring if player is in line
-    public atRing: (z: number) => Mesh | void;
-    private hitRing = false;
-
     // private positionAttr: Float32BufferAttribute;
     // private normalAttr: Float32BufferAttribute;
     // private colorAttr: Uint8BufferAttribute;
@@ -38,7 +35,11 @@ export class Chunk extends Object3D {
 
     private featuresGenerator: FeatureGeneratorT;
     private instanceRoller: InstanceRoller;
-    private ring: Mesh;
+
+    private ring: TypeMesh;
+    // returns null if not important, or the ring if player is in line
+    public atRing: (z: number) => TypeMesh | void;
+    private hitRing = false;
 
 
     constructor(private scene) {
@@ -48,14 +49,22 @@ export class Chunk extends Object3D {
     // Setup buffers / material etc
     init() {
         const ringAsset = Assets.getAsset('Ring');
-        const material = new MeshPhongMaterial({
-            color: 0x481666,
-            transparent: true,
-            opacity: 0.5,
-            shininess: 100,
-            emissive: 0x481666
+        // const material = new MeshPhongMaterial({
+        //     color: 0x481666,
+        //     transparent: true,
+        //     opacity: 0.5,
+        //     shininess: 100,
+        //     emissive: 0x481666
+        // });
+        this.ring = new TypeMesh(ringAsset.geometry,{
+            'speedup': new MeshBasicMaterial({
+                color: 0x481666
+            }),
+            'normal': new MeshBasicMaterial({
+                color: 0x7C4E00
+            })
         });
-        this.ring = new Mesh(ringAsset.geometry, material );
+        this.ring
         this.ring.layers.set(1);
         this.ring.visible = false;
         this.add(this.ring);
@@ -84,16 +93,10 @@ export class Chunk extends Object3D {
 
         const indices = [];
         const simpleIndices = [
-            0, 19, 61,
-            19, 80, 61
+            // 0, 19, 61,
+            // 19, 80, 61
         ];
         for (let zi = 0; zi < this.depthCount - 1; zi++) {
-            const a = zi * this.widthCount;
-            const b = (zi + 1) * this.widthCount;
-            // simpleIndices.push(
-            //     a, a+59, b,
-            //     a+59, b+59, b
-            // );
             for (let xi = 0; xi < this.widthCount - 1; xi++) {
                 const a = zi * this.widthCount + xi;
                 const b = (zi + 1) * this.widthCount + xi;
@@ -101,6 +104,31 @@ export class Chunk extends Object3D {
                     a, a+1, b,
                     a+1, b+1, b
                 );
+
+                if(zi == 0) {
+                    const mid = 11 * this.widthCount + xi
+                    simpleIndices.push(
+                        a, a+1, b,
+                        a+1, b+1, b,
+                        b, b+1, mid,
+                        b+1, mid+1, mid
+                    )
+                }
+                if(zi == 11) {
+                    const end = (this.depthCount - 2) * this.widthCount + xi;
+                    simpleIndices.push(
+                        a, a+1, b,
+                        a+1, b+1, b,
+                        b, b+1, end,
+                        b+1, end+1, end
+                    )
+                }
+                if(zi == this.depthCount - 2) {
+                    simpleIndices.push(
+                        a, a+1, b,
+                        a+1, b+1, b
+                    )
+                }
             }
         }
 
@@ -137,8 +165,8 @@ export class Chunk extends Object3D {
         const simpleGround = Object.create(mesh);
         simpleGround.geometry = simpleGroundGeo;
 
-        // groundLod.addLevel(mesh);
-        groundLod.addLevel(simpleGround);
+        groundLod.addLevel(mesh);
+        groundLod.addLevel(simpleGround, 60);
 
 
         this.add(groundLod);
@@ -153,6 +181,7 @@ export class Chunk extends Object3D {
         // Ring
         if(features.ring) {
             this.ring.visible = true;
+            this.ring.tipe = features.ringType;
             this.ring.position.set(features.ring.x, features.ring.y, features.ring.z);
             this.atRing = (z) => {
                 if (Math.abs(z - features.ring.z) <= 0.2) {
@@ -193,8 +222,8 @@ export class Chunk extends Object3D {
                 buffIndex += 3;
             }
 
-            console.log('mountain left end');
-            console.log(buffIndex);
+            // console.log('mountain left end');
+            // console.log(buffIndex);
 
             // ground noise
             let groundRandom = random(rand.seed);
@@ -222,8 +251,8 @@ export class Chunk extends Object3D {
             // rand = random(rand.nextSeed, -0.05, 0.05);
             // let y = x * x / width / width + rand.random;
 
-            console.log('ground end');
-            console.log(buffIndex);
+            // console.log('ground end');
+            // console.log(buffIndex);
 
             // Mountain Right
             for (let x = Chunk.chunkWidth / 6 + mgn * this.vertexSpacing; x <= Chunk.chunkWidth / 2; x+= this.vertexSpacing) {
@@ -243,8 +272,8 @@ export class Chunk extends Object3D {
                 buffIndex += 3;
             }
 
-            console.log('RIGHT end');
-            console.log(buffIndex);
+            // console.log('RIGHT end');
+            // console.log(buffIndex);
 
             if(z != -Chunk.chunkDepth / 2) { rand = random(rand.nextSeed); }
         }

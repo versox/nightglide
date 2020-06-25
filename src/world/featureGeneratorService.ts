@@ -39,6 +39,7 @@ interface Features {
     groundType: GROUND,
     hillsType: HILLS,
     ring?: Vector3 | null,
+    ringType?: string,
     asset?: any
 }
 
@@ -71,6 +72,7 @@ class FeatureGenerator {
                     this.featuresRandom.random(-5, 5),
                     this.featuresRandom.random(3, 6),
                      0); 
+                features.ringType = this.featuresRandom.random(0, 10) > 5 ? 'speedup' : 'normal';
             }
         }
         

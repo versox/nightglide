@@ -62,7 +62,7 @@ export class Game {
         const directionalLight = new DirectionalLight(0xffffff, 0.3);
         directionalLight.position.set(0, 1, 1);
         this.scene.add(directionalLight);
-        this.scene.fog = new Fog(0x000000, 30, 120);
+        this.scene.fog = new Fog(0x000000, 20, 100);
 
         // Menu
         const textureLoader = new TextureLoader();

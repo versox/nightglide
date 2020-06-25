@@ -53,16 +53,16 @@ export class GliderPlayer extends Mesh {
         this.geometry = asset.geometry;
         this.material = asset.material;
 
-        // this.layers.set(1);
+        this.layers.set(1);
 
         // var light = new PointLight( 0xff0000, 5, 3 );
         // light.layers.set(1);
         // this.add(light);
 
-        // const playerLight = new DirectionalLight(0xffffff, 0.9);
-        // playerLight.position.set(0, 5, 1);
-        // playerLight.layers.set(1);
-        // this.add(playerLight);
+        const playerLight = new DirectionalLight(0xffffff, 0.9);
+        playerLight.position.set(0, 5, 1);
+        playerLight.layers.set(1);
+        this.add(playerLight);
     }
 
     moveLeft() {
@@ -130,8 +130,10 @@ export class GliderPlayer extends Mesh {
                 if (delta < 0.7) {
                     ring.visible = false;
                     this.increaseScore();
-                    this.advanceFactor++;
-                    this.calculateAdvance();
+                    if (ring.tipe == 'speedup') {
+                        this.advanceFactor++;
+                        this.calculateAdvance();
+                    }
                     this.potentialMiss = false;
                     this.lastCollision = performance.now();
                 } else {
