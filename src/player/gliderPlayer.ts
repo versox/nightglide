@@ -141,10 +141,10 @@ export class GliderPlayer extends Mesh {
                 }
             } else {
                 if (this.potentialMiss) {
-                    console.log("MISS");
+                    // console.log("MISS");
                     this.potentialMiss = false;
                     this.lives--;
-                    console.log(this.lives);
+                    // console.log(this.lives);
                     this.updateLives();
                     if (this.lives <= 0) {
                         return true;
